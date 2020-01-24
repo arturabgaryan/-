@@ -5,9 +5,11 @@ class Blueprinter:
         self.f = True
 
     def moveto(self, x, y):
+        x, y = float(x), float(y)
         self.pos = [x * 20, y * 20]
 
     def vector_move(self, x, y):
+        x, y = float(x), float(y)
         self.pos[0] += x * 20
         self.pos[1] += y * 20
 

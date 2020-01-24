@@ -47,7 +47,7 @@ def function_argument(s):
     i -= 1
     i2 = i
     res = s[i1:i2 + 1]
-    return res
+    return no_space_string(res)
 
 
 def complicated_argument(s):
@@ -95,11 +95,11 @@ def compiling_txt(file_name):
             f = True
         else:
             f = False
-            raise MySyntaxError('Синтаксическая ошибка')
+            raise MySyntaxError('Синтаксическая ошибка в строке {}'.format(i))
     if f:
         op = l[0]
         core_alg(l)
-        if op == 'Черепаха' or op == 'Чертежник':
+        if op == 'Черепаха' or op == 'Чертежник' or op == 'Робот':
             canvas.pack()
             main.mainloop()
 
@@ -140,7 +140,35 @@ def core_alg(l):
                 op.down()
 
     elif operator == 'Черепаха':
-        pass
+        op = Turtle()
+        coords()
+        crd = op.pos
+        pos = canvas.create_oval(xs(crd[0] - 2), ys(crd[1] - 2), xs(crd[0] + 2), ys(crd[1] + 2), fill='black')
+        for i in range(len(l)):
+            if formatted_command(l[i]) == 'вперед':
+                point1 = copy.deepcopy(op.pos)
+                op.forward(function_argument(l[i]))
+                point2 = copy.deepcopy(op.pos)
+                if op.f:
+                    canvas.create_line(xs(point1[0]), ys(point1[1]), xs(point2[0]), ys(point2[1]))
+                    canvas.delete(pos)
+                pos = canvas.create_oval(xs(crd[0] - 2), ys(crd[1] - 2), xs(crd[0] + 2), ys(crd[1] + 2), fill='black')
+            elif formatted_command(l[i]) == 'назад':
+                point1 = copy.deepcopy(op.pos())
+                op.backwards(function_argument(l[i]))
+                point2 = copy.deepcopy(op.pos())
+                if op.f:
+                    canvas.create_line(xs(point1[0]), ys(point1[1]), xs(point2[0]), ys(point2[1]))
+                    canvas.delete(pos)
+                pos = canvas.create_oval(xs(crd[0] - 2), ys(crd[1] - 2), xs(crd[0] + 2), ys(crd[1] + 2), fill='black')
+            elif formatted_command(l[i]) == 'вправо':
+                op.right(function_argument(l[i]))
+            elif formatted_command(l[i]) == 'влево':
+                op.left(function_argument(l[i]))
+            elif formatted_command(l[i]) == 'подними_хвост':
+                op.up()
+            elif formatted_command(l[i]) == 'опусти_хвост':
+                op.down()
     elif operator == 'Вычислитель':
         pass
     elif operator == 'Робот':
