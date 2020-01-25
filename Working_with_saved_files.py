@@ -62,6 +62,27 @@ def complicated_argument(s):
     return res
 
 
+def cycle_body(l):
+    f = False
+    p1, p2 = 0, 0
+    for i in range(len(l)):
+        if 'пока' in l[i] or 'нц' in l[i]:
+            p1 = i + 1
+            f = True
+            break
+    for i in range(len(l) - 1, -1, -1):
+        if 'кц' in l[i]:
+            p2 = i
+            break
+
+    if f:
+        res = l[p1:p2]
+        res.insert(0, p2 + 1)
+    else:
+        return [False]
+    return res
+
+
 # -------------------------------------------------------------------------------------------------------
 def xs(x):
     return x + 400
@@ -91,29 +112,40 @@ def compiling_txt(file_name):
     operator = l[0]
     f = False
     for i in range(1, len(l)):
-        if formatted_command(l[i]) in op_dict[operator].command_list:
+        t = formatted_command(l[i])
+        if (t in op_dict[operator].command_list) or ('нц' in t) or ('пока' in t) or ('кц' in t):
             f = True
         else:
             f = False
-            raise MySyntaxError('Синтаксическая ошибка в строке {}'.format(i))
+            raise MySyntaxError('Синтаксическая ошибка в строке {}'.format(i + 1))
     if f:
         op = l[0]
-        core_alg(l)
-        if op == 'Черепаха' or op == 'Чертежник' or op == 'Робот':
+        if op == 'Чертежник':
+            op = Blueprinter()
+        elif op == 'Черепаха':
+            op = Turtle()
+        elif op == 'Робот':
+            op = Robot()
+        elif op == 'Вычислитель':
+            op = Calculator()
+        core_alg(l[1:], op)
+        if isinstance(op, Turtle) or isinstance(op, Blueprinter) or op == (op, Robot):
             canvas.pack()
             main.mainloop()
 
 
-def core_alg(l):
+def core_alg(l, op):
     global canvas, main
-    operator = l[0]
-    if operator == 'Чертежник':
-        op = Blueprinter()
+
+    if isinstance(op, Blueprinter):
         coords()
         crd = op.pos
         pos = canvas.create_oval(xs(crd[0] - 2), ys(crd[1] - 2), xs(crd[0] + 2), ys(crd[1] + 2), fill='red')
-        for i in range(len(l)):
-            if formatted_command(l[i]) == 'сместись_в_точку':
+        i = 0
+        while i < len(l):
+            print(l[i])
+            t = formatted_command(l[i])
+            if t == 'сместись_в_точку':
                 args = complicated_argument(l[i])
                 point1 = copy.deepcopy(op.pos)
                 op.moveto(args[0], args[1])
@@ -124,7 +156,7 @@ def core_alg(l):
                 crd = op.pos
                 pos = canvas.create_oval(xs(crd[0] - 2), ys(crd[1] - 2), xs(crd[0] + 2), ys(crd[1] + 2), fill='red')
 
-            elif formatted_command(l[i]) == 'сместись_на_вектор':
+            elif t == 'сместись_на_вектор':
                 args = complicated_argument(l[i])
                 point1 = copy.deepcopy(op.pos)
                 op.vector_move(args[0], args[1])
@@ -134,44 +166,57 @@ def core_alg(l):
                 canvas.delete(pos)
                 crd = op.pos
                 pos = canvas.create_oval(xs(crd[0] - 2), ys(crd[1] - 2), xs(crd[0] + 2), ys(crd[1] + 2), fill='red')
-            elif formatted_command(l[i]) == 'подними_перо':
+            elif t == 'подними_перо':
                 op.up()
-            elif formatted_command(l[i]) == 'опусти_перо':
+            elif t == 'опусти_перо':
                 op.down()
+            elif 'нц' in t:
+                cycle = cycle_body(l)
+                for j in range(int(t[2])):
+                    core_alg(cycle[1:], op)
+                i = int(cycle[0]) - 1
+            i += 1
 
-    elif operator == 'Черепаха':
-        op = Turtle()
-        coords()
+    elif isinstance(op, Turtle):
+        i = 0
         crd = op.pos
         pos = canvas.create_oval(xs(crd[0] - 2), ys(crd[1] - 2), xs(crd[0] + 2), ys(crd[1] + 2), fill='black')
-        for i in range(len(l)):
-            if formatted_command(l[i]) == 'вперед':
+        while i < len(l):
+            t = formatted_command(l[i])
+            print(l[i])
+            if t == 'вперед':
                 point1 = copy.deepcopy(op.pos)
                 op.forward(function_argument(l[i]))
                 point2 = copy.deepcopy(op.pos)
                 if op.f:
                     canvas.create_line(xs(point1[0]), ys(point1[1]), xs(point2[0]), ys(point2[1]))
-                    canvas.delete(pos)
+                canvas.delete(pos)
                 pos = canvas.create_oval(xs(crd[0] - 2), ys(crd[1] - 2), xs(crd[0] + 2), ys(crd[1] + 2), fill='black')
-            elif formatted_command(l[i]) == 'назад':
+            elif t == 'назад':
                 point1 = copy.deepcopy(op.pos())
                 op.backwards(function_argument(l[i]))
                 point2 = copy.deepcopy(op.pos())
                 if op.f:
                     canvas.create_line(xs(point1[0]), ys(point1[1]), xs(point2[0]), ys(point2[1]))
-                    canvas.delete(pos)
+                canvas.delete(pos)
                 pos = canvas.create_oval(xs(crd[0] - 2), ys(crd[1] - 2), xs(crd[0] + 2), ys(crd[1] + 2), fill='black')
-            elif formatted_command(l[i]) == 'вправо':
+            elif t == 'вправо':
                 op.right(function_argument(l[i]))
-            elif formatted_command(l[i]) == 'влево':
+            elif t == 'влево':
                 op.left(function_argument(l[i]))
-            elif formatted_command(l[i]) == 'подними_хвост':
+            elif t == 'подними_хвост':
                 op.up()
-            elif formatted_command(l[i]) == 'опусти_хвост':
+            elif t == 'опусти_хвост':
                 op.down()
-    elif operator == 'Вычислитель':
+            elif 'нц' in t:
+                cycle = cycle_body(l)
+                for j in range(int(t[2])):
+                    core_alg(cycle[1:], op)
+                i = int(cycle[0]) - 2
+            i += 1
+    elif isinstance(op, Calculator):
         pass
-    elif operator == 'Робот':
+    elif isinstance(op, Robot):
         pass
 
 
